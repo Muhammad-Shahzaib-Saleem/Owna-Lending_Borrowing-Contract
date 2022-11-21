@@ -478,9 +478,14 @@ contract OwnaLendingBorrowing is ERC721{
 
     uint256 public toalNoLoans;
 
+    //Admin fee 2% of Owna
     uint256 public  adminFeeInBasisPoints = 200;
 
+    //Monthly 1% debt
     uint256 public monthlyDebt = 100;
+
+    //Acceptable Debt for Flexible
+    uint256 public  acceptableDebt = 12;
 
     uint256 public maximumExpiration = 72 hours;
 
@@ -588,6 +593,8 @@ contract OwnaLendingBorrowing is ERC721{
 
     mapping(uint256=>bool) public isNftOffering;
 
+    mapping(uint256=>uint256) public timeElapse;
+
    
 
     //Lending and Borrowing Functions
@@ -609,7 +616,7 @@ contract OwnaLendingBorrowing is ERC721{
         address _nftContract,
         address _erc20Contract,
         uint256 _expiration,
-        
+        address _borrower,
         address _lender) public  {
 
            
@@ -631,7 +638,7 @@ contract OwnaLendingBorrowing is ERC721{
             
             require(!isFixedOffering[fix.fixedId],"Already offering loan");
             require(!isNftOffering[fix.nftId],"Already fixed loan offering NFT");
-            require(fix.expiration < maximumExpiration,"Offering time is not more");
+            require(fix.expiration < maximumExpiration,"Loan Offering time is Finished");
             require(fix.durations <= maximumLoanDuration,"Duration of loan should be less than or equal 90 days");
             require(fix.durations != 0,"Duration of loan zero no acceptable");
             require(fix.entryFee == adminFeeInBasisPoints,"Admin fee should be 2% (200 in params) acceptable only");
@@ -646,7 +653,7 @@ contract OwnaLendingBorrowing is ERC721{
              isNftOffering[fix.nftId] = true;
 
             //
-            //IERC721(fix.nftContract).transferFrom(msg.sender, address(this), fix.nftId);
+            IERC721(fix.nftContract).transferFrom(_borrower, address(this), fix.nftId);
             
             IERC20(fix.erc20Contract).transferFrom(fix.lender,address(this),fix.maxLoan);
 
@@ -703,16 +710,21 @@ contract OwnaLendingBorrowing is ERC721{
 
             require(borrowerAddressIsWhitelisted[_borrower],"Borrower not whitelisted for this contract");
 
+            //2% fee calculate
             uint256 repayLoanInterestFee = percentageCalculate(_amount);
 
+            //%1 monthly
             uint256 repayMonthlyInterest = percentageMonthly(_amount);
+
+            //12% acceptable debt
+            uint256 repayAcceptableDebt = percentageAcceptableDebt(_amount);
             
             uint256 repayWithMonthly = repayMonthlyInterest.mul(1);
 
             //Remaining loan amount calculate
             uint256 remainLoan = flexible.maxLoan - _amount;
 
-            uint256 totalDebt = repayLoanInterestFee.add(repayMonthlyInterest);
+            uint256 totalDebt = repayLoanInterestFee.add(repayMonthlyInterest).add(repayAcceptableDebt).add(_amount);
 
 
             IERC20(flexible.erc20Contract).transfer(_borrower,_amount);
@@ -766,7 +778,7 @@ contract OwnaLendingBorrowing is ERC721{
             );
 
             //burn nft Id from Borrower address
-            IERC721(fix.nftContract)._burn(fix.nftId);
+           // IERC721(fix.nftContract)._burn(fix.nftId);
 
             //Delete Structure of fixed borrowing
             delete fixBorrow[_id];
@@ -779,13 +791,24 @@ contract OwnaLendingBorrowing is ERC721{
 
             require(msg.sender==flexibledBorrow.borrower,"Only Borrower can refund");
 
+            uint256 endTime = block.timestamp;
+
+            uint256 timeWithDays = endTime - flexible.startTime; 
+
+             
+
+            
+
+              //uint256 payingTime = timeElapse[timeIndays(flexible.startTime, endTime)];
+
+
             IERC20(flexible.erc20Contract).transferFrom(flexibledBorrow.borrower,address(this),flexibledBorrow.totalRepayDebt);
 
             uint256 repayFromOwnaToLender = flexibledBorrow.loanAmount.add(flexibledBorrow.withMonthlyRepay);
             IERC20(flexible.erc20Contract).transfer(flexibledBorrow.lender,repayFromOwnaToLender);
 
 
-              IERC721(flexible.nftContract)._burn(flexible.nftId);
+              //IERC721(flexible.nftContract)._burn(flexible.nftId);
 
             //Delete Structure of fixed borrowing
             delete flexibleBorrow[_id];
@@ -809,6 +832,7 @@ contract OwnaLendingBorrowing is ERC721{
         address _nftContract,
         address _erc20Contract,
         uint256 _expiration,
+        address _borrower,
         address _lender) public {
 
              Flexible memory flexible = Flexible({
@@ -832,7 +856,7 @@ contract OwnaLendingBorrowing is ERC721{
             require(!isNftOffering[flexible.nftId],"Already flexible offering  NFT ");
             require(flexible.entryFee == adminFeeInBasisPoints,"Admin fee should be 2% (200 in params) acceptable only");
             
-            require(flexible.expiration < maximumExpiration,"Offering time is not more");
+            require(flexible.expiration < maximumExpiration,"Loan Offering time Finished");
             require(flexible.minLoan == 5000,"Minimum loan should be 5000&");
             require(flexible.maxLoan == 7500,"Maximum should be 7500&");
 
@@ -842,6 +866,7 @@ contract OwnaLendingBorrowing is ERC721{
              isNftOffering[flexible.nftId] = true;
              isFlexibledOffering[flexible.flexibleId] = true;
 
+            IERC721(flexible.nftContract).transferFrom(_borrower, address(this), flexible.nftId);
 
 
             //Transfer maximum loan amount from lender to Owna contract
@@ -870,6 +895,15 @@ contract OwnaLendingBorrowing is ERC721{
 
             return percentMonthly;
 
+    }
+
+   
+
+    function percentageAcceptableDebt(uint _val) public view returns(uint256){
+
+        uint256 percentAcceptableDebt = _val.div(100).mul(acceptableDebt);
+
+        return percentAcceptableDebt;
     }
 
     function timeIndays (uint256 _strt, uint256 _end) public pure   returns(uint256 timeInday, uint256 timeInHours, uint256 timeInMinutes){
