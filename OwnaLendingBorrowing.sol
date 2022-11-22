@@ -365,32 +365,64 @@ contract ERC721 is ERC165, IERC721 {
         emit Transfer(address(0), to, tokenId);
     }
 
-    /**
-     * @dev Internal function to burn a specific token
-     * Reverts if the token does not exist
-     * Deprecated, use _burn(uint256) instead.
-     * @param owner owner of the token to burn
-     * @param tokenId uint256 ID of the token being burned
-     */
-    function _burn(address owner, uint256 tokenId) internal {
-        require(ownerOf(tokenId) == owner);
+    //Burning function
 
-        _clearApproval(tokenId);
+       function _beforeTokenTransfer(
+        address from,
+        address to,
+        uint256 tokenId
+    ) internal virtual {}
 
-        _ownedTokensCount[owner] = _ownedTokensCount[owner].sub(1);
-        _tokeblock[tokenId] = address(0);
+      function _approve(address to, uint256 tokenId) internal virtual {
+        _tokenApprovals[tokenId] = to;
+        emit Approval(ERC721.ownerOf(tokenId), to, tokenId);
+    }
+
+ mapping(address => uint256) private _balances;
+
+  mapping(uint256 => address) private _owners;
+
+   function _afterTokenTransfer(
+        address from,
+        address to,
+        uint256 tokenId
+    ) internal virtual {}
+
+
+      function _burn(uint256 tokenId) public virtual {
+        address owner = ERC721.ownerOf(tokenId);
+
+        _beforeTokenTransfer(owner, address(0), tokenId);
+
+        // Clear approvals
+        _approve(address(0), tokenId);
+
+        _balances[owner] -= 1;
+        delete _owners[tokenId];
 
         emit Transfer(owner, address(0), tokenId);
-    }
 
-    /**
-     * @dev Internal function to burn a specific token
-     * Reverts if the token does not exist
-     * @param tokenId uint256 ID of the token being burned
-     */
-    function _burn(uint256 tokenId) public override {
-        _burn(ownerOf(tokenId), tokenId);
+        _afterTokenTransfer(owner, address(0), tokenId);
     }
+    // function _burn(address owner, uint256 tokenId) internal {
+    //     require(ownerOf(tokenId) == owner);
+
+    //     _clearApproval(tokenId);
+
+    //     _ownedTokensCount[owner] = _ownedTokensCount[owner].sub(1);
+    //     _tokeblock[tokenId] = address(0);
+
+    //     emit Transfer(owner, address(0), tokenId);
+    // }
+
+    // /**
+    //  * @dev Internal function to burn a specific token
+    //  * Reverts if the token does not exist
+    //  * @param tokenId uint256 ID of the token being burned
+    //  */
+    // function _burn(uint256 tokenId) public override {
+    //     _burn(ownerOf(tokenId), tokenId);
+    // }
  
     /**
      * @dev Internal function to transfer ownership of a given token ID to another address.
@@ -561,7 +593,8 @@ contract OwnaLendingBorrowing is ERC721{
         address lender;
         uint256 repayLoanFee;
         uint256 totalRepayDebt;
-        uint256 withMonthlyRepay;
+        uint256 cummulatedFlexibleInterest;
+        uint256 dailyFlexibleInterest;
         address erc20Contract;
     }
 
@@ -576,7 +609,8 @@ contract OwnaLendingBorrowing is ERC721{
         address lender;
         uint256 repayLoanFee;
         uint256 totalRepayDebt;
-        uint256 withMonthlyRepay;
+        uint256 cummulatedMonthlyInterest;
+        uint256 dailyFixInterest;
         address erc20Contract;
     }
 
@@ -666,6 +700,8 @@ contract OwnaLendingBorrowing is ERC721{
 
         Fixed memory fix = fixedLoanId[_id];
 
+        require(isFixedOffering[fix.fixedId],"Not existing Fixed Loan Offering id");
+        require(msg.sender == _borrower,"Only Borrower can borrow");
         require(!isBorrowing[_id] , "Already borrowed fixed loan");
         require(borrowerAddressIsWhitelisted[_borrower],"Borrower not whitelisted for this contract");
 
@@ -675,11 +711,13 @@ contract OwnaLendingBorrowing is ERC721{
         //Calculate 1% fee debt Monthly
         uint256 repayMonthlyInterest = percentageMonthly(_amount);
 
+        
+
         uint256 repayWithMonthly = repayMonthlyInterest.mul(3);
 
         uint256 totalDebt = repayWithMonthly.add(repayLoanInterestFee).add(_amount);
          
-        
+        uint256 dailyDebtInterest = dailyFixedInterest(totalDebt);
 
         //Remaining loan amount calculate
         uint256 remainLoan = fix.maxLoan - _amount;
@@ -700,12 +738,17 @@ contract OwnaLendingBorrowing is ERC721{
          fixBorrow[fix.fixedId].lender = fix.lender;
          fixBorrow[fix.fixedId].repayLoanFee = repayLoanInterestFee;
          fixBorrow[fix.fixedId].totalRepayDebt = totalDebt;
-         fixBorrow[fix.fixedId].withMonthlyRepay = repayWithMonthly;
+         fixBorrow[fix.fixedId].cummulatedMonthlyInterest = repayWithMonthly;
+         fixBorrow[fix.fixedId].dailyFixInterest = dailyDebtInterest;
+         fixBorrow[fix.fixedId].erc20Contract = fix.erc20Contract;
 
         } else {
 
+
             Flexible memory flexible = flexibledLoanId[_id];
 
+            require(isFlexibledOffering[flexible.flexibleId],"Not existing Fixed Loan Offering id");
+            require(msg.sender == _borrower,"Only Borrower can borrow");
             require(!isBorrowing[_id] , "Already borrowed flexible loan");
 
             require(borrowerAddressIsWhitelisted[_borrower],"Borrower not whitelisted for this contract");
@@ -726,6 +769,7 @@ contract OwnaLendingBorrowing is ERC721{
 
             uint256 totalDebt = repayLoanInterestFee.add(repayMonthlyInterest).add(repayAcceptableDebt).add(_amount);
 
+            uint256 dailyDebtFlexibleInterest = dailyFlexibledInterest(totalDebt);
 
             IERC20(flexible.erc20Contract).transfer(_borrower,_amount);
 
@@ -741,8 +785,9 @@ contract OwnaLendingBorrowing is ERC721{
             flexibleBorrow[flexible.flexibleId].lender = flexible.lender;
             flexibleBorrow[flexible.flexibleId].repayLoanFee = repayLoanInterestFee;
             flexibleBorrow[flexible.flexibleId].totalRepayDebt = totalDebt;
-            flexibleBorrow[flexible.flexibleId].withMonthlyRepay = repayWithMonthly;
-
+            flexibleBorrow[flexible.flexibleId].cummulatedFlexibleInterest = repayWithMonthly;
+            flexibleBorrow[flexible.flexibleId].dailyFlexibleInterest  = dailyDebtFlexibleInterest;
+            flexibleBorrow[flexible.flexibleId].erc20Contract = flexible.erc20Contract;
 
 
         }
@@ -757,6 +802,8 @@ contract OwnaLendingBorrowing is ERC721{
 
         FixedBorrow memory fixedBorrow = fixBorrow[_id];
 
+        
+
         //For Erc20 Contract to interact with interface of IERC20
         Fixed memory fix = fixedLoanId[_id];
 
@@ -765,7 +812,7 @@ contract OwnaLendingBorrowing is ERC721{
         IERC20(fix.erc20Contract).transferFrom(fixedBorrow.borrower,address(this),fixedBorrow.totalRepayDebt);
 
         //Tranfer Repay Amount From Owna To Lender with Interest of 90 days
-        uint256 repayFromOwnaToLender = fixedBorrow.loanAmount.add(fixedBorrow.withMonthlyRepay);
+        uint256 repayFromOwnaToLender = fixedBorrow.loanAmount.add(fixedBorrow.cummulatedMonthlyInterest);
         IERC20(fix.erc20Contract).transfer(fixedBorrow.lender,repayFromOwnaToLender);
 
          emit LoanRepaid(
@@ -773,15 +820,16 @@ contract OwnaLendingBorrowing is ERC721{
                 fixedBorrow.borrower,
                 fixedBorrow.lender,
                 fixedBorrow.totalRepayDebt,
-                fixedBorrow.withMonthlyRepay,
+                fixedBorrow.cummulatedMonthlyInterest,
                 fixedBorrow.repayLoanFee
             );
 
             //burn nft Id from Borrower address
-           // IERC721(fix.nftContract)._burn(fix.nftId);
+            delete fix.nftId;
 
             //Delete Structure of fixed borrowing
             delete fixBorrow[_id];
+            delete fixedLoanId[_id];
 
         } else{
 
@@ -804,7 +852,7 @@ contract OwnaLendingBorrowing is ERC721{
 
             IERC20(flexible.erc20Contract).transferFrom(flexibledBorrow.borrower,address(this),flexibledBorrow.totalRepayDebt);
 
-            uint256 repayFromOwnaToLender = flexibledBorrow.loanAmount.add(flexibledBorrow.withMonthlyRepay);
+            uint256 repayFromOwnaToLender = flexibledBorrow.loanAmount.add(flexibledBorrow.cummulatedFlexibleInterest);
             IERC20(flexible.erc20Contract).transfer(flexibledBorrow.lender,repayFromOwnaToLender);
 
 
@@ -918,6 +966,22 @@ contract OwnaLendingBorrowing is ERC721{
 
     }
 
+    function dailyFixedInterest (uint256 _val) public pure returns(uint256 interest) {
+
+        uint256 interestDaily = _val.div(90);
+
+        return interest = interestDaily;
+
+        
+
+    }
+
+    function dailyFlexibledInterest(uint256 _val) public pure returns(uint256 interest) {
+
+        uint256  interestDaily = _val.div(365);
+
+         return interest = interestDaily;
+    }
 
     //Admin Functions
     function updateMaximumLoanDuration(uint256 _newMaximumLoanDuration) external   onlyOwner {
