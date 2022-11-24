@@ -1,98 +1,245 @@
 
+// File: @openzeppelin/contracts/utils/math/SafeMath.sol
+
+
+// OpenZeppelin Contracts (last updated v4.6.0) (utils/math/SafeMath.sol)
+
 pragma solidity ^0.8.0;
+
+// CAUTION
+// This version of SafeMath should only be used with Solidity 0.8 or later,
+// because it relies on the compiler's built in overflow checks.
+
+/**
+ * @dev Wrappers over Solidity's arithmetic operations.
+ *
+ * NOTE: `SafeMath` is generally not needed starting with Solidity 0.8, since the compiler
+ * now has built in overflow checking.
+ */
 library SafeMath {
     /**
-    * @dev Multiplies two unsigned integers, reverts on overflow.
-    */
-    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-        // Gas optimization: this is cheaper than requiring 'a' not being zero, but the
-        // benefit is lost if 'b' is also tested.
-        // See: https://github.com/OpenZeppelin/openzeppelin-solidity/pull/522
-        if (a == 0) {
-            return 0;
+     * @dev Returns the addition of two unsigned integers, with an overflow flag.
+     *
+     * _Available since v3.4._
+     */
+    function tryAdd(uint256 a, uint256 b) internal pure returns (bool, uint256) {
+        unchecked {
+            uint256 c = a + b;
+            if (c < a) return (false, 0);
+            return (true, c);
         }
-
-        uint256 c = a * b;
-        require(c / a == b);
-
-        return c;
     }
 
     /**
-    * @dev Integer division of two unsigned integers truncating the quotient, reverts on division by zero.
-    */
-    function div(uint256 a, uint256 b) internal pure returns (uint256) {
-        // Solidity only automatically asserts when dividing by 0
-        require(b > 0);
-        uint256 c = a / b;
-        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-
-        return c;
+     * @dev Returns the subtraction of two unsigned integers, with an overflow flag.
+     *
+     * _Available since v3.4._
+     */
+    function trySub(uint256 a, uint256 b) internal pure returns (bool, uint256) {
+        unchecked {
+            if (b > a) return (false, 0);
+            return (true, a - b);
+        }
     }
 
     /**
-    * @dev Subtracts two unsigned integers, reverts on overflow (i.e. if subtrahend is greater than minuend).
-    */
+     * @dev Returns the multiplication of two unsigned integers, with an overflow flag.
+     *
+     * _Available since v3.4._
+     */
+    function tryMul(uint256 a, uint256 b) internal pure returns (bool, uint256) {
+        unchecked {
+            // Gas optimization: this is cheaper than requiring 'a' not being zero, but the
+            // benefit is lost if 'b' is also tested.
+            // See: https://github.com/OpenZeppelin/openzeppelin-contracts/pull/522
+            if (a == 0) return (true, 0);
+            uint256 c = a * b;
+            if (c / a != b) return (false, 0);
+            return (true, c);
+        }
+    }
+
+    /**
+     * @dev Returns the division of two unsigned integers, with a division by zero flag.
+     *
+     * _Available since v3.4._
+     */
+    function tryDiv(uint256 a, uint256 b) internal pure returns (bool, uint256) {
+        unchecked {
+            if (b == 0) return (false, 0);
+            return (true, a / b);
+        }
+    }
+
+    /**
+     * @dev Returns the remainder of dividing two unsigned integers, with a division by zero flag.
+     *
+     * _Available since v3.4._
+     */
+    function tryMod(uint256 a, uint256 b) internal pure returns (bool, uint256) {
+        unchecked {
+            if (b == 0) return (false, 0);
+            return (true, a % b);
+        }
+    }
+
+    /**
+     * @dev Returns the addition of two unsigned integers, reverting on
+     * overflow.
+     *
+     * Counterpart to Solidity's `+` operator.
+     *
+     * Requirements:
+     *
+     * - Addition cannot overflow.
+     */
+    function add(uint256 a, uint256 b) internal pure returns (uint256) {
+        return a + b;
+    }
+
+    /**
+     * @dev Returns the subtraction of two unsigned integers, reverting on
+     * overflow (when the result is negative).
+     *
+     * Counterpart to Solidity's `-` operator.
+     *
+     * Requirements:
+     *
+     * - Subtraction cannot overflow.
+     */
     function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-        require(b <= a);
-        uint256 c = a - b;
-
-        return c;
+        return a - b;
     }
 
     /**
-    * @dev Adds two unsigned integers, reverts on overflow.
-    */
-    function add(uint256 a, uint256 b) external  pure returns (uint256) {
-        uint256 c = a + b;
-        require(c >= a);
-
-        return c;
+     * @dev Returns the multiplication of two unsigned integers, reverting on
+     * overflow.
+     *
+     * Counterpart to Solidity's `*` operator.
+     *
+     * Requirements:
+     *
+     * - Multiplication cannot overflow.
+     */
+    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+        return a * b;
     }
 
     /**
-    * @dev Divides two unsigned integers and returns the remainder (unsigned integer modulo),
-    * reverts when dividing by zero.
-    */
+     * @dev Returns the integer division of two unsigned integers, reverting on
+     * division by zero. The result is rounded towards zero.
+     *
+     * Counterpart to Solidity's `/` operator.
+     *
+     * Requirements:
+     *
+     * - The divisor cannot be zero.
+     */
+    function div(uint256 a, uint256 b) internal pure returns (uint256) {
+        return a / b;
+    }
+
+    /**
+     * @dev Returns the remainder of dividing two unsigned integers. (unsigned integer modulo),
+     * reverting when dividing by zero.
+     *
+     * Counterpart to Solidity's `%` operator. This function uses a `revert`
+     * opcode (which leaves remaining gas untouched) while Solidity uses an
+     * invalid opcode to revert (consuming all remaining gas).
+     *
+     * Requirements:
+     *
+     * - The divisor cannot be zero.
+     */
     function mod(uint256 a, uint256 b) internal pure returns (uint256) {
-        require(b != 0);
         return a % b;
     }
-}
 
-library Address {
     /**
-     * Returns whether the target address is a contract
-     * @dev This function will return false if invoked during the constructor of a contract,
-     * as the code is not actually created until after the constructor finishes.
-     * @param account address of the account to check
-     * @return whether the target address is a contract
+     * @dev Returns the subtraction of two unsigned integers, reverting with custom message on
+     * overflow (when the result is negative).
+     *
+     * CAUTION: This function is deprecated because it requires allocating memory for the error
+     * message unnecessarily. For custom revert reasons use {trySub}.
+     *
+     * Counterpart to Solidity's `-` operator.
+     *
+     * Requirements:
+     *
+     * - Subtraction cannot overflow.
      */
-    function isContract(address account) internal view returns (bool) {
-        uint256 size;
-        // XXX Currently there is no better way to check if there is a contract in an address
-        // than to check the size of the code at that address.
-        // See https://ethereum.stackexchange.com/a/14016/36603
-        // for more details about how this works.
-        // TODO Check this again before the Serenity release, because all addresses will be
-        // contracts then.
-        // solhint-disable-next-line no-inline-assembly
-        assembly { size := extcodesize(account) }
-        return size > 0;
+    function sub(
+        uint256 a,
+        uint256 b,
+        string memory errorMessage
+    ) internal pure returns (uint256) {
+        unchecked {
+            require(b <= a, errorMessage);
+            return a - b;
+        }
+    }
+
+    /**
+     * @dev Returns the integer division of two unsigned integers, reverting with custom message on
+     * division by zero. The result is rounded towards zero.
+     *
+     * Counterpart to Solidity's `/` operator. Note: this function uses a
+     * `revert` opcode (which leaves remaining gas untouched) while Solidity
+     * uses an invalid opcode to revert (consuming all remaining gas).
+     *
+     * Requirements:
+     *
+     * - The divisor cannot be zero.
+     */
+    function div(
+        uint256 a,
+        uint256 b,
+        string memory errorMessage
+    ) internal pure returns (uint256) {
+        unchecked {
+            require(b > 0, errorMessage);
+            return a / b;
+        }
+    }
+
+    /**
+     * @dev Returns the remainder of dividing two unsigned integers. (unsigned integer modulo),
+     * reverting with custom message when dividing by zero.
+     *
+     * CAUTION: This function is deprecated because it requires allocating memory for the error
+     * message unnecessarily. For custom revert reasons use {tryMod}.
+     *
+     * Counterpart to Solidity's `%` operator. This function uses a `revert`
+     * opcode (which leaves remaining gas untouched) while Solidity uses an
+     * invalid opcode to revert (consuming all remaining gas).
+     *
+     * Requirements:
+     *
+     * - The divisor cannot be zero.
+     */
+    function mod(
+        uint256 a,
+        uint256 b,
+        string memory errorMessage
+    ) internal pure returns (uint256) {
+        unchecked {
+            require(b > 0, errorMessage);
+            return a % b;
+        }
     }
 }
 
-interface IERC165 {
-    /**
-     * @notice Query if a contract implements an interface
-     * @param interfaceId The interface identifier, as specified in ERC-165
-     * @dev Interface identification is specified in ERC-165. This function
-     * uses less than 30,000 gas.
-     */
-    function supportsInterface(bytes4 interfaceId) external view returns (bool);
-}
+// File: contracts/OwnaLendingBorrowing.sol
 
-interface   IERC721 is IERC165 {
+//SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+
+
+
+
+
+interface   IERC721  {
     event Transfer(address indexed from, address indexed to, uint256 indexed tokenId);
     event Approval(address indexed owner, address indexed approved, uint256 indexed tokenId);
     event ApprovalForAll(address indexed owner, address indexed operator, bool approved);
@@ -115,356 +262,8 @@ interface   IERC721 is IERC165 {
     function burn(uint256 tokenId) external;
 }
 
-contract ERC165 is IERC165 {
-    using SafeMath for uint256;
-    
-    bytes4 private constant _INTERFACE_ID_ERC165 = 0x01ffc9a7;
-    /**
-     * 0x01ffc9a7 ===
-     *     bytes4(keccak256('supportsInterface(bytes4)'))
-     */
-
-    /**
-     * @dev a mapping of interface id to whether or not it's supported
-     */
-    mapping(bytes4 => bool) private _supportedInterfaces;
-
-    /**
-     * @dev A contract implementing SupportsInterfaceWithLookup
-     * implement ERC165 itself
-     */
-    constructor ()  {
-        _registerInterface(_INTERFACE_ID_ERC165);
-    }
-
-    /**
-     * @dev implement supportsInterface(bytes4) using a lookup table
-     */
-    function supportsInterface(bytes4 interfaceId) external view override returns (bool) {
-        return _supportedInterfaces[interfaceId];
-    }
-
-    /**
-     * @dev internal method for registering an interface
-     */
-    function _registerInterface(bytes4 interfaceId) internal {
-        require(interfaceId != 0xffffffff);
-        _supportedInterfaces[interfaceId] = true;
-    }
-}
-
-interface IERC721Receiver {
-    /**
-     * @notice Handle the receipt of an NFT
-     * @dev The ERC721 smart contract calls this function on the recipient
-     * after a `safeTransfer`. This function MUST return the function selector,
-     * otherwise the caller will revert the transaction. The selector to be
-     * returned can be obtained as `this.onERC721Received.selector`. This
-     * function MAY throw to revert and reject the transfer.
-     * Note: the ERC721 contract address is always the message sender.
-     * @param operator The address which called `safeTransferFrom` function
-     * @param from The address which previously owned the token
-     * @param tokenId The NFT identifier which is being transferred
-     * @param data Additional data with no specified format
-     * @return `bytes4(keccak256("onERC721Received(address,address,uint256,bytes)"))`
-     */
-    function onERC721Received(address operator, address from, uint256 tokenId, bytes memory data)
-    external returns (bytes4);
-}
-
-// contract ERC721 is ERC165, IERC721 {
-//     using SafeMath for uint256;
-//     using Address for address;
-
-//     // Equals to `bytes4(keccak256("onERC721Received(address,address,uint256,bytes)"))`
-//     // which can be also obtained as `IERC721Receiver(0).onERC721Received.selector`
-//     bytes4 private constant _ERC721_RECEIVED = 0x150b7a02;
-
-//     // Mapping from token ID to owner
-//     mapping (uint256 => address) private _tokeblock;
-
-//     // Mapping from token ID to approved address
-//     mapping (uint256 => address) private _tokenApprovals;
-
-//     // Mapping from owner to number of owned token
-//     mapping (address => uint256) private _ownedTokensCount;
-
-//     // Mapping from owner to operator approvals
-//     mapping (address => mapping (address => bool)) private _operatorApprovals;
-
-//     bytes4 private constant _INTERFACE_ID_ERC721 = 0x80ac58cd;
-//     /*
-//      * 0x80ac58cd ===
-//      *     bytes4(keccak256('balanceOf(address)')) ^
-//      *     bytes4(keccak256('ownerOf(uint256)')) ^
-//      *     bytes4(keccak256('approve(address,uint256)')) ^
-//      *     bytes4(keccak256('getApproved(uint256)')) ^
-//      *     bytes4(keccak256('setApprovalForAll(address,bool)')) ^
-//      *     bytes4(keccak256('isApprovedForAll(address,address)')) ^
-//      *     bytes4(keccak256('transferFrom(address,address,uint256)')) ^
-//      *     bytes4(keccak256('safeTransferFrom(address,address,uint256)')) ^
-//      *     bytes4(keccak256('safeTransferFrom(address,address,uint256,bytes)'))
-//      */
-
-//     constructor ()  {
-//         // register the supported interfaces to conform to ERC721 via ERC165
-//         _registerInterface(_INTERFACE_ID_ERC721);
-//     }
-
-//     /**
-//      * @dev Gets the balance of the specified address
-//      * @param owner address to query the balance of
-//      * @return uint256 representing the amount owned by the passed address
-//      */
-//     function balanceOf(address owner) public view override  returns  (uint256) {
-//         require(owner != address(0));
-//         return _ownedTokensCount[owner];
-//     }
-
-//     /**
-//      * @dev Gets the owner of the specified token ID
-//      * @param tokenId uint256 ID of the token to query the owner of
-//      * @return owner address currently marked as the owner of the given token ID
-//      */
-//     function ownerOf(uint256 tokenId) public view override  returns (address) {
-//         address owner = _tokeblock[tokenId];
-//         require(owner != address(0));
-//         return owner;
-//     }
-
-//     /**
-//      * @dev Approves another address to transfer the given token ID
-//      * The zero address indicates there is no approved address.
-//      * There can only be one approved address per token at a given time.
-//      * Can only be called by the token owner or an approved operator.
-//      * @param to address to be approved for the given token ID
-//      * @param tokenId uint256 ID of the token to be approved
-//      */
-//     function approve(address to, uint256 tokenId) public override {
-//         address owner = ownerOf(tokenId);
-//         require(to != owner);
-//         require(msg.sender == owner || isApprovedForAll(owner, msg.sender));
-
-//         _tokenApprovals[tokenId] = to;
-//         emit Approval(owner, to, tokenId);
-//     }
-
-//     /**
-//      * @dev Gets the approved address for a token ID, or zero if no address set
-//      * Reverts if the token ID does not exist.
-//      * @param tokenId uint256 ID of the token to query the approval of
-//      * @return address currently approved for the given token ID
-//      */
-//     function getApproved(uint256 tokenId) public view override returns (address) {
-//         require(_exists(tokenId));
-//         return _tokenApprovals[tokenId];
-//     }
-
-//     /**
-//      * @dev Sets or unsets the approval of a given operator
-//      * An operator is allowed to transfer all tokens of the sender on their behalf
-//      * @param to operator address to set the approval
-//      * @param approved representing the status of the approval to be set
-//      */
-//     function setApprovalForAll(address to, bool approved) public override {
-//         require(to != msg.sender);
-//         _operatorApprovals[msg.sender][to] = approved;
-//         emit ApprovalForAll(msg.sender, to, approved);
-//     }
-
-//     /**
-//      * @dev Tells whether an operator is approved by a given owner
-//      * @param owner owner address which you want to query the approval of
-//      * @param operator operator address which you want to query the approval of
-//      * @return bool whether the given operator is approved by the given owner
-//      */
-//     function isApprovedForAll(address owner, address operator) public override view returns (bool) {
-//         return _operatorApprovals[owner][operator];
-//     }
-
-//     /**
-//      * @dev Transfers the ownership of a given token ID to another address
-//      * Usage of this method is discouraged, use `safeTransferFrom` whenever possible
-//      * Requires the msg sender to be the owner, approved, or operator
-//      * @param from current owner of the token
-//      * @param to address to receive the ownership of the given token ID
-//      * @param tokenId uint256 ID of the token to be transferred
-//     */
-//     function transferFrom(address from, address to, uint256 tokenId) public override {
-//         require(_isApprovedOrOwner(msg.sender, tokenId));
-
-//         _transferFrom(from, to, tokenId);
-//     }
-
-//     /**
-//      * @dev Safely transfers the ownership of a given token ID to another address
-//      * If the target address is a contract, it must implement `onERC721Received`,
-//      * which is called upon a safe transfer, and return the magic value
-//      * `bytes4(keccak256("onERC721Received(address,address,uint256,bytes)"))`; otherwise,
-//      * the transfer is reverted.
-//      *
-//      * Requires the msg sender to be the owner, approved, or operator
-//      * @param from current owner of the token
-//      * @param to address to receive the ownership of the given token ID
-//      * @param tokenId uint256 ID of the token to be transferred
-//     */
-//     function safeTransferFrom(address from, address to, uint256 tokenId) override public {
-//         safeTransferFrom(from, to, tokenId, "");
-//     }
-
-//     /**
-//      * @dev Safely transfers the ownership of a given token ID to another address
-//      * If the target address is a contract, it must implement `onERC721Received`,
-//      * which is called upon a safe transfer, and return the magic value
-//      * `bytes4(keccak256("onERC721Received(address,address,uint256,bytes)"))`; otherwise,
-//      * the transfer is reverted.
-//      * Requires the msg sender to be the owner, approved, or operator
-//      * @param from current owner of the token
-//      * @param to address to receive the ownership of the given token ID
-//      * @param tokenId uint256 ID of the token to be transferred
-//      * @param _data bytes data to send along with a safe transfer check
-//      */
-//     function safeTransferFrom(address from, address to, uint256 tokenId, bytes memory _data) public override {
-//         transferFrom(from, to, tokenId);
-//         require(_checkOnERC721Received(from, to, tokenId, _data));
-//     }
-
-//     /**
-//      * @dev Returns whether the specified token exists
-//      * @param tokenId uint256 ID of the token to query the existence of
-//      * @return whether the token exists
-//      */
-//     function _exists(uint256 tokenId) internal view returns (bool) {
-//         address owner = _tokeblock[tokenId];
-//         return owner != address(0);
-//     }
-
-//     /**
-//      * @dev Returns whether the given spender can transfer a given token ID
-//      * @param spender address of the spender to query
-//      * @param tokenId uint256 ID of the token to be transferred
-//      * @return bool whether the msg.sender is approved for the given token ID,
-//      *    is an operator of the owner, or is the owner of the token
-//      */
-//     function _isApprovedOrOwner(address spender, uint256 tokenId) internal view returns (bool) {
-//         address owner = ownerOf(tokenId);
-//         return (spender == owner || getApproved(tokenId) == spender || isApprovedForAll(owner, spender));
-//     }
-
-//     /**
-//      * @dev Internal function to mint a new token
-//      * Reverts if the given token ID already exists
-//      * @param to The address that will own the minted token
-//      * @param tokenId uint256 ID of the token to be minted
-//      */
-//     function _mint(address to, uint256 tokenId) internal {
-//         require(to != address(0));
-//         require(!_exists(tokenId));
-
-//         _tokeblock[tokenId] = to;
-//         _ownedTokensCount[to] = _ownedTokensCount[to].add(1);
-
-//         emit Transfer(address(0), to, tokenId);
-//     }
-
-//     //Burning function
-
-//        function _beforeTokenTransfer(
-//         address from,
-//         address to,
-//         uint256 tokenId
-//     ) internal virtual {}
-
-//       function _approve(address to, uint256 tokenId) internal virtual {
-//         _tokenApprovals[tokenId] = to;
-//         emit Approval(ERC721.ownerOf(tokenId), to, tokenId);
-//     }
-
-//  mapping(address => uint256) private _balances;
-
-//   mapping(uint256 => address) private _owners;
-
-//    function _afterTokenTransfer(
-//         address from,
-//         address to,
-//         uint256 tokenId
-//     ) internal virtual {}
 
 
- 
-
-//      mapping(uint256=>address) _tokenOwner;
-//     function _burn(address owner, uint256 tokenId) internal {
-//         require(ownerOf(tokenId) == owner);
-
-//         _clearApproval(tokenId);
-
-//         _ownedTokensCount[owner] = _ownedTokensCount[owner].sub(1);
-//         _tokenOwner[tokenId] = address(0);
-
-//         emit Transfer(owner, address(0), tokenId);
-//     }
-
-//     /**
-//      * @dev Internal function to burn a specific token
-//      * Reverts if the token does not exist
-//      * @param tokenId uint256 ID of the token being burned
-//      */
-//     function _burn(uint256 tokenId) public override {
-//         _burn(ownerOf(tokenId), tokenId);
-//     }
- 
-//     /**
-//      * @dev Internal function to transfer ownership of a given token ID to another address.
-//      * As opposed to transferFrom, this imposes no restrictions on msg.sender.
-//      * @param from current owner of the token
-//      * @param to address to receive the ownership of the given token ID
-//      * @param tokenId uint256 ID of the token to be transferred
-//     */
-//     function _transferFrom(address from, address to, uint256 tokenId) internal {
-//         require(ownerOf(tokenId) == from);
-//         require(to != address(0));
-
-//         _clearApproval(tokenId);
-
-//         _ownedTokensCount[from] = _ownedTokensCount[from].sub(1);
-//         _ownedTokensCount[to] = _ownedTokensCount[to].add(1);
-
-//         _tokeblock[tokenId] = to;
-
-//         emit Transfer(from, to, tokenId);
-//     }
-
-//     /**
-//      * @dev Internal function to invoke `onERC721Received` on a target address
-//      * The call is not executed if the target address is not a contract
-//      * @param from address representing the previous owner of the given token ID
-//      * @param to target address that will receive the tokens
-//      * @param tokenId uint256 ID of the token to be transferred
-//      * @param _data bytes optional data to send along with the call
-//      * @return whether the call correctly returned the expected magic value
-//      */
-//     function _checkOnERC721Received(address from, address to, uint256 tokenId, bytes memory _data)
-//         internal returns (bool)
-//     {
-//         if (!to.isContract()) {
-//             return true;
-//         }
-
-//         bytes4 retval = IERC721Receiver(to).onERC721Received(msg.sender, from, tokenId, _data);
-//         return (retval == _ERC721_RECEIVED);
-//     }
-
-//     /**
-//      * @dev Private function to clear current approval of a given token ID
-//      * @param tokenId uint256 ID of the token to be transferred
-//      */
-//     function _clearApproval(uint256 tokenId) private {
-//         if (_tokenApprovals[tokenId] != address(0)) {
-//             _tokenApprovals[tokenId] = address(0);
-//         }
-//     }
-// }
 
 interface IERC20 {
     function transfer(address to, uint256 value) external returns (bool);
@@ -484,8 +283,8 @@ interface IERC20 {
     event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
-//SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+
+
 
 contract OwnaLendingBorrowing {
 
@@ -963,9 +762,9 @@ contract OwnaLendingBorrowing {
             require(!isNftOffering[flexible.nftId],"Already flexible offering  NFT ");
             require(flexible.entryFee == adminFeeInBasisPoints,"Admin fee should be 2% (200 in params) acceptable only");
             
-            require(flexible.expiration < maximumExpiration,"Loan Offering time Finished");
-            require(flexible.minLoan == 5000,"Minimum loan should be 5000&");
-            require(flexible.maxLoan == 7500,"Maximum should be 7500&");
+            require(flexible.expiration == maximumExpiration,"Loan Offering time Finished");
+            require(flexible.minLoan != 0,"Minimum loan should be 5000&");
+            require(flexible.maxLoan > flexible.minLoan,"Maximum should be 7500&");
 
              flexibledLoanId[toalNoLoans] = flexible;
              toalNoLoans = toalNoLoans.add(1);
@@ -983,9 +782,6 @@ contract OwnaLendingBorrowing {
 
 
     }
-
-
-
 
 
 
@@ -1032,10 +828,9 @@ contract OwnaLendingBorrowing {
         uint256 interestDaily = _val.div(90);
 
         return interest = interestDaily;
-
-        
-
     }
+
+
 
     function dailyFlexibledInterest(uint256 _val) public pure returns(uint256 interest) {
 
