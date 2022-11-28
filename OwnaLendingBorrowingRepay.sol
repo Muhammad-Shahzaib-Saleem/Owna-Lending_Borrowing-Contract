@@ -428,33 +428,25 @@ contract OwnaLendingBorrowing {
 
 
 
-    function repayLoan(uint256 _id,uint256 _selectAmount) public {
+    function repayFixLoan(uint256 _id,uint256 _selectAmount) internal {
 
+        uint256 fixedSelectedAmount = _selectAmount;
+        
         //Fixed Repay Loan Amount Calculation
         FixedBorrow memory fixedBorrow = fixBorrow[_id];
-            Fixed memory fix = fixedLoanId[_id];
+        Fixed memory fix = fixedLoanId[_id];
 
-        uint256 pendingFixedAmount = fixedBorrow.totalRepayDebt.sub(_selectAmount);
+        uint256 pendingFixedAmount = fixedBorrow.totalRepayDebt.sub(fixedSelectedAmount);
+
 
         //FLexible Repay Loan Amount Calculation
-        FlexibledBorrow memory flexibledBorrow = flexibleBorrow[_id];
-
-            Flexible memory flexible = flexibledLoanId[_id];
-
-        uint256 pendingFlexibledAmount = flexibledBorrow.totalRepayDebt.sub(_selectAmount);
-
-
-
+     
 
         if(isFixedOffering[_id]){
 
+            if(fixedBorrow.totalRepayDebt==fixedSelectedAmount){
             
-
-        // FixedBorrow memory fixedBorrow = fixBorrow[_id];
-
-        if(fixedBorrow.totalRepayDebt==_selectAmount){
-            
-        require(!(isFixedRepaid[_id]),"Already Loan Repaid");
+        
         require(msg.sender==fixedBorrow.borrower,"Only Borrower can refund");
 
         IERC20(fix.erc20Contract).transferFrom(fixedBorrow.borrower,address(this),fixedBorrow.totalRepayDebt);
@@ -463,7 +455,7 @@ contract OwnaLendingBorrowing {
         uint256 repayFromOwnaToLender = fixedBorrow.loanAmount.add(fixedBorrow.cummulatedMonthlyInterest);
         IERC20(fix.erc20Contract).transfer(fixedBorrow.lender,repayFromOwnaToLender);
 
-            isFixedRepaid[_id] = true;
+          
          emit LoanFixRepaid (
                 _id,
                 fixedBorrow.borrower,
@@ -483,34 +475,45 @@ contract OwnaLendingBorrowing {
             delete fixedLoanId[_id];
     
         }else{
-
-                uint256 newFixedRepay = pendingFixedAmount;
+            uint256 newFixedRepay = pendingFixedAmount;
 
                 fixBorrow[fix.fixedId].totalRepayDebt = newFixedRepay;
 
-                IERC20(fix.erc20Contract).transferFrom(fixedBorrow.borrower,address(this),_selectAmount);
-
+                IERC20(fix.erc20Contract).transferFrom(fixedBorrow.borrower,address(this),fixedSelectedAmount);
         }
-        
+        }
+    }
 
-        //For Erc20 Contract to interact with interface of IERC20
-        
-        } else{
+    function repayLoan(uint256 _id,uint256 _selectAmount) public{
 
+        if(isFixedOffering[_id]){
 
-            if(flexibledBorrow.totalRepayDebt == _selectAmount){
-                require(msg.sender==flexibledBorrow.borrower,"Only Borrower can refund");
+            repayFixLoan(_id,_selectAmount);
+        }else{
 
-            //uint256 endTime = block.timestamp;
+            repayFlexible(_id,_selectAmount);
+        }
+    }
 
-            //uint256 timeWithDays = endTime - flexible.startTime; 
-
-             
-
+    function repayFlexible(uint256 _id,uint256 _selectAmount) internal{
+            
+            uint256 flexibleSelectedAmount = _selectAmount;
             
 
-              //uint256 payingTime = timeElapse[timeIndays(flexible.startTime, endTime)];
+            FlexibledBorrow memory flexibledBorrow = flexibleBorrow[_id];
+        
 
+
+
+        if(isFlexibledOffering[_id]){
+
+
+            if(flexibledBorrow.totalRepayDebt == flexibleSelectedAmount){
+              
+                 Flexible memory flexible = flexibledLoanId[_id];
+            
+            
+            require(msg.sender==flexibledBorrow.borrower,"Only Borrower can refund");
 
             IERC20(flexible.erc20Contract).transferFrom(flexibledBorrow.borrower,address(this),flexibledBorrow.totalRepayDebt);
 
@@ -520,29 +523,40 @@ contract OwnaLendingBorrowing {
 
             IERC721(flexible.nftContract).burn(flexible.nftId);
 
-            //Delete Structure of fixed borrowing
+           
             delete flexibleBorrow[_id];
             delete flexibledLoanId[_id];
             
-            }else{
+             } 
+            else{
+                
+                Flexible memory flexible = flexibledLoanId[_id];
+
+                //  FlexibledBorrow memory flexibledBorrow = flexibleBorrow[_id];
+                // FlexibledBorrow memory flexibledBorrow = flexibleBorrow[_id];
+                //require(_selectAmount<=flexibleBorrow[flexible.flexibleId].totalRepayDebt,"Selected Flexibled Loan Amount must be less than or equal to Repay Loan Amount");
+                uint256 pendingFlexibledAmount = flexibledBorrow.totalRepayDebt.sub(flexibleSelectedAmount);
 
                 uint256 newFlexibledRepay = pendingFlexibledAmount;
 
                 flexibleBorrow[flexible.flexibleId].totalRepayDebt = newFlexibledRepay;
 
-                IERC20(flexible.erc20Contract).transferFrom(flexibledBorrow.borrower,address(this),_selectAmount);
+                IERC20(flexible.erc20Contract).transferFrom(flexibledBorrow.borrower,address(this),flexibleSelectedAmount);
 
 
 
             }
 
-            
-            
-
-
         }
-        
     }
+        
+
+
+
+        
+    
+
+
 
 
 
