@@ -488,17 +488,7 @@ contract OwnaLendingBorrowing {
 
     }
 
-    // function payBack(uint256 _id) public {
-    //     Fixed memory fix = fixedLoanId[_id];
-    //     for(uint256 i = 0; i <= arr.length - 1;i++){
-
-    //         if(_id != i)
-
-    //             IERC20(fix.erc20Contract).transfer(arr[i].lender,arr[i].maxLoan);
-            
-
-    //     }
-    // }
+  
 
 
 
