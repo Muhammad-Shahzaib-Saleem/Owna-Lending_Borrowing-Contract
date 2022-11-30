@@ -167,9 +167,11 @@ contract OwnaLendingBorrowing {
     //     address lenderSelect;
     // }
 
-    Fixed    []  public arr;
+    //Fixed    []  public arr;
 
-    Flexible [] public flexArr;
+    //Flexible [] public flexArr;
+
+    uint256 [] public arr ;
 
     mapping(uint256=>address[]) public lenders;
     //mapping(address => mapping(uint256 => MultiOffers)) public Offers;
@@ -267,8 +269,8 @@ contract OwnaLendingBorrowing {
 
     mapping(uint256=>uint256) public timeElapse;
 
-   mapping(uint256=>bool) public isNftExists;
-   mapping(uint256=>bool) public isAccepted;
+    mapping(uint256=>bool) public isNftExists;
+    mapping(uint256=>bool) public isAccepted;
 
     //Lending and Borrowing Functions
 
@@ -345,7 +347,7 @@ contract OwnaLendingBorrowing {
 
             //Offers[msg.sender][fix.fixedId].offerMaxVal = fix.maxLoan;
             //lenders[fix.fixedId].push(msg.sender);
-            arr.push(fixedLoanId[fix.fixedId]);
+            arr.push(fix.fixedId);
 
             emit FixedLoan(fix.fixedId, fix.durations, fix.entryFee, fix.apr, fix.minLoan, fix.maxLoan, fix.startTime, fix.nftId, fix.nftContract, fix.erc20Contract, fix.expiration, fix.lender);
 
@@ -413,7 +415,18 @@ contract OwnaLendingBorrowing {
 
             if(_id != i){
 
-                IERC20(fix.erc20Contract).transfer(arr[i].lender,arr[i].maxLoan);
+                Flexible memory flexible = flexibledLoanId[i];
+
+                if(fixedLoanId[i].maxLoan != 0){
+                IERC20(fix.erc20Contract).transfer(fixedLoanId[i].lender,fixedLoanId[i].maxLoan);
+
+                }
+
+
+                if(flexibledLoanId[i].maxLoan != 0){
+
+                IERC20(flexible.erc20Contract).transfer(flexibledLoanId[i].lender,flexibledLoanId[i].maxLoan);
+                }
             }
 
         }
@@ -472,11 +485,24 @@ contract OwnaLendingBorrowing {
             flexibleBorrow[flexible.flexibleId].erc20Contract = flexible.erc20Contract;
 
 
-         for(uint256 i = 0; i <= flexArr.length - 1;i++){
+         for(uint256 i = 0; i <= arr.length - 1;i++){
 
             if(_id != i){
 
-                IERC20(flexible.erc20Contract).transfer(flexArr[i].lender,flexArr[i].maxLoan);
+                Fixed memory fix = fixedLoanId[i];
+
+                if(flexibledLoanId[i].maxLoan != 0){
+                IERC20(flexible.erc20Contract).transfer(flexibledLoanId[i].lender,flexibledLoanId[i].maxLoan);
+
+                }
+
+                if(fixedLoanId[i].maxLoan != 0){
+                IERC20(fix.erc20Contract).transfer(fixedLoanId[i].lender,fixedLoanId[i].maxLoan);
+
+                }
+
+
+                
             }
 
         }
@@ -680,7 +706,7 @@ contract OwnaLendingBorrowing {
             //Transfer maximum loan amount from lender to Owna contract
             IERC20(flexible.erc20Contract).transferFrom(flexible.lender,address(this),flexible.maxLoan);
             //arr.push(fixedLoanId[fix.fixedId]);
-            flexArr.push(flexibledLoanId[flexible.flexibleId]);
+            arr.push(flexible.flexibleId);
             emit FlexibleLoan(flexible.flexibleId, flexible.entryFee, flexible.apr, flexible.minLoan, flexible.maxLoan, flexible.acceptable_debt, flexible.startTime, flexible.nftId, flexible.nftContract, flexible.erc20Contract, flexible.expiration, flexible.lender);
 
 
